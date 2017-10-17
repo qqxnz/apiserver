@@ -14,6 +14,15 @@
         添加find查询条件限制
 更新人：钟宝森
 
+
+更新时间：2017-10-17 11:47:24
+更新内容： 
+        增加连接阿里云mongodb方法
+        增加断开阿里云mongodb方法
+更新人：吕扶美
+
+
+
 */
 var Fiber = require('fibers');
 var poolModule = require('generic-pool');
@@ -24,62 +33,9 @@ var config = require('./config.js');
 
 
 
-// var host1 = "dds-bp15bd02fc2165841.mongodb.rds.aliyuncs.com";
-// var port1 = 3717;
-// var host2 = "dds-bp15bd02fc2165842.mongodb.rds.aliyuncs.com";
-// var port2 = 3717;
-
-// var host1 = conf.mongodb.host1;
-// var port1 = 3717;
-// var host2 = "120.27.216.223";
-// var port2 = 37171;
-// var username = "root";
-// var password = "Zyk123456";
-// var replSetName = "mgset-2358551";
-
-// var dbName = "test";
 
 
 var mongo = {};
-
-// mongo.pool = poolModule.Pool({
-//     name: 'mongodb',
-//     //将建 一个 连接的 handler
-//     create: function(callback) {
-//         var conf = config.get('app');
-//         // console.log('MongoDB连接池创建连接!');
-//         var url = 'mongodb://'+ conf.mongodb.address +':'+ conf.mongodb.port +'/'+ conf.mongodb.db;
-//         var  server = mongodb.Server(conf.mongodb.address, conf.mongodb.port, {auto_reconnect:false});
-//         var  db = mongodb.Db(conf.mongodb.db, server, {safe:true});
-//         db.open(function(err,result){  //注意，必须打开数据库，然后登录验证
-//             db.authenticate(conf.mongodb.user,conf.mongodb.pass,function(err,result){
-//                 if(!result){
-//                     callback(err);
-//                 }else{
-//                     callback(null,db);
-//                 }
-//             });
-//         });
-
-//     },
-//     // 释放一个连接的 handler
-//     destroy  : function(db) { 
-//         // console.log('MongoDB连接池释放连接!');
-//         db.close();
-//     },
-//     // 连接池中最大连接数量
-//     max      : 50,
-//     // 连接池中最少连接数量
-//     min      : 10, 
-//     // 如果一个线程3秒钟内没有被使用过的话。那么就释放
-//     idleTimeoutMillis : 30000,
-//     // 如果 设置为 true 的话，就是使用 console.log 打印入职，当然你可以传递一个 function 最为作为日志记录handler
-//     log : true 
-// });
-
-
-
-
 
 mongo.pool = poolModule.Pool({
     name: 'mongodb',
@@ -103,6 +59,41 @@ mongo.pool = poolModule.Pool({
     log: false
 });
 
+//阿里云mongodb创建连接方法
+mongo.ali_open = function (url,user,pass) {
+    var result = {};
+    var fiber = Fiber.current;
+    mongoClient.connect(url, function(err, db) {
+        if(err) {
+            console.error("connect err:", err);
+            result = null;
+            fiber.run();
+        }else{
+           //授权. 这里的username基于admin数据库授权
+            var adminDb = db.admin();
+            adminDb.authenticate(user, pass, function(err, result) {
+                if(err) {
+                    console.error("authenticate err:", err);
+                    result = null;
+                    fiber.run();
+                }else{
+                    result = db;
+                    fiber.run();
+                }
+
+
+            });
+        }
+    });
+
+    Fiber.yield();
+    return result;
+}
+
+//阿里云mongodb释放连接方法
+mongo.ali_close = function (db) {
+    db.close();
+}
 
 
 
