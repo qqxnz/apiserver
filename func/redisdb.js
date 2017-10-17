@@ -1,12 +1,21 @@
-/**日志功能
+/**redis数据库
 创建时间：2016-09-23
 创建人：吕扶美
+
+
 
 更新时间：2016-12-20 11:39:32
 更新内容： 
         result = false; 全都改成result = null;
         优化细节
 更新人：钟宝森
+
+
+
+更新时间：2017-10-17 11:39:32
+更新内容： 增加setnx方法
+更新人：吕扶美
+
 
 */
 var Fiber = require('fibers');
@@ -385,6 +394,37 @@ redisdb.set = function(db,key_name,value){
 		fiber.run();
 	})
 	Fiber.yield();
+    return result;
+}
+
+/**
+将 key 的值设为 value ，当且仅当 key 不存在。
+
+若给定的 key 已经存在，则 SETNX 不做任何动作。
+
+SETNX 是『SET if Not eXists』(如果不存在，则 SET)的简写
+
+返回值：
+
+　　设置成功，返回 1 。
+　　设置失败，返回 0 。
+ */
+redisdb.setnx = function(db,key_name,value){
+    if(db == undefined){
+        console.error('Redis 未连接！！！');
+        return false;
+    }
+    var result = {};
+    var fiber = Fiber.current;
+    db.setnx(key_name,value,function (err, data){
+        if(err){
+            result = false;
+        }else{
+            result = data;
+        }
+        fiber.run();
+    })
+    Fiber.yield();
     return result;
 }
 
