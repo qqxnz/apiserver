@@ -14,7 +14,7 @@ var redis = require("redis");
 var cipher = require('./func/cipher.js');
 var logs = require('./func/logs.js');
 var moment = require("moment");
-var version ='1.9.2';
+var version ='2.0.1';
 
 console.log('version:'+version);
 
